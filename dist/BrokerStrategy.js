@@ -23,7 +23,8 @@ class BrokerStrategy extends microservices_1.Server {
                     : BrokerStrategy.name + "-" + topic;
                 const events = patterns
                     .filter((pattern) => pattern.split(channel + ">").length > 0)
-                    .map((pattern) => pattern.split(channel + ">")[1]);
+                    .map((pattern) => pattern.split(channel + ">")[1])
+                    .filter((pattern) => !!pattern);
                 await this.consumer.consume({
                     topic,
                     groupId: groupId,
