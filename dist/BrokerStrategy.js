@@ -8,20 +8,25 @@ class BrokerStrategy extends microservices_1.Server {
         this.consumer = consumer;
         this.configService = configService;
     }
-    close() {
-        console.log("Close BrokerStrategy");
+    async close() {
+        return this.consumer.onApplicationShutdown();
     }
     async listen(callback) {
         const patterns = Array.from(this.getHandlers().keys());
         const channels = new Set(patterns.map((pattern) => pattern.split(">")[0]));
         if (channels.size > 0) {
             for (const channel of channels) {
+                const arr = channel.split(":");
+                const topic = arr[0];
+                const groupId = arr.length === 2
+                    ? BrokerStrategy.name + "-" + topic + "-" + arr[1]
+                    : BrokerStrategy.name + "-" + topic;
                 const events = patterns
                     .filter((pattern) => pattern.split(channel + ">").length > 0)
                     .map((pattern) => pattern.split(channel + ">")[1]);
                 await this.consumer.consume({
-                    topic: channel,
-                    groupId: BrokerStrategy.name + "-" + channel,
+                    topic,
+                    groupId: groupId,
                     user: this.configService.get("BROKER_USER"),
                     onMessage: async (event) => {
                         const handlerNames = events.filter((eventName) => eventName.split(":").length > 0

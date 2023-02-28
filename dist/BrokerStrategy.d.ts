@@ -5,6 +5,6 @@ export declare class BrokerStrategy extends Server implements CustomTransportStr
     private readonly consumer;
     private readonly configService;
     constructor(consumer: MongoConsumerService, configService: ConfigService);
-    close(): void;
+    close(): Promise<void>;
     listen(callback: () => void): Promise<void>;
 }
