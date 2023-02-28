@@ -1,14 +1,18 @@
 import { Injectable, OnApplicationShutdown } from "@nestjs/common";
 import { Connection } from "mongoose";
 import { Transactional } from "mongoose-transaction-decorator";
-import { IConsumer } from "src/api";
+import { BrokerConsumerDBConnectionName, IConsumer } from "src/api";
 import { MongoConsumer } from "./MongoConsumer";
+import { InjectConnection } from "@nestjs/mongoose";
 
 @Injectable()
 export class MongoConsumerService implements OnApplicationShutdown {
   private readonly consumers: IConsumer[] = [];
 
-  constructor(private readonly connection: Connection) {}
+  constructor(
+    @InjectConnection(BrokerConsumerDBConnectionName)
+    private readonly connection: Connection
+  ) {}
 
   @Transactional()
   async consume({ topic, groupId, user, onMessage }) {
