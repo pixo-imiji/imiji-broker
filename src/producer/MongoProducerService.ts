@@ -2,7 +2,7 @@ import { Connection } from "mongoose";
 import { Injectable, OnApplicationShutdown } from "@nestjs/common";
 import { Transactional } from "mongoose-transaction-decorator";
 import { IEvent } from "imiji-api";
-import { BrokerProducerDBConnectionName, IProducer } from "src/api";
+import { BrokerProducerDBConnectionName, IProducer } from "../api";
 import { MongoProducer } from "./MongoProducer";
 import { InjectConnection } from "@nestjs/mongoose";
 

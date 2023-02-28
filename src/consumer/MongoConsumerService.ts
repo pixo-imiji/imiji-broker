@@ -1,7 +1,7 @@
 import { Injectable, OnApplicationShutdown } from "@nestjs/common";
 import { Connection } from "mongoose";
 import { Transactional } from "mongoose-transaction-decorator";
-import { BrokerConsumerDBConnectionName, IConsumer } from "src/api";
+import { BrokerConsumerDBConnectionName, IConsumer } from "../api";
 import { MongoConsumer } from "./MongoConsumer";
 import { InjectConnection } from "@nestjs/mongoose";
 
