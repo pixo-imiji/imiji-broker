@@ -1,0 +1,7 @@
+node_modules
+.gitignore
+deploy
+.prettierrc
+*.iml
+tsconfig*.json
+src
