@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { Connection } from "mongoose";
 import { TransactionConnection } from "mongoose-transaction-decorator";
-import { IEvent } from "imiji-api";
+import { IEvent } from "imiji-server-api";
 import { IProducer } from "src/api";
 
 export class MongoProducer implements IProducer {

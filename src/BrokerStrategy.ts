@@ -1,7 +1,7 @@
 import { MongoConsumerService } from "./consumer/MongoConsumerService";
 import { CustomTransportStrategy, Server } from "@nestjs/microservices";
 import { ConfigService } from "@nestjs/config";
-import { IEvent } from "imiji-api";
+import { IEvent } from "imiji-server-api";
 
 export class BrokerStrategy extends Server implements CustomTransportStrategy {
   constructor(
