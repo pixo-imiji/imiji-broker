@@ -1,22 +1,5 @@
-pipeline {
-  agent any
-  stages {
-    stage('Build') {
-      steps {
-        echo "building"
-        sleep 10
-      }
-    }
-    stage('Test') {
-      steps {
-        echo "testing"
-        sleep 30
-      }
-    }
-    stage('Deploy') {
-      steps {
-        echo "deploying"
-      }
-    }
-  }
+@Library('imiji-jenkins-lib')_
+
+releaseModule {
+    scmUrl = 'git@github.com:pixo-imiji/imiji-broker.git'
 }
