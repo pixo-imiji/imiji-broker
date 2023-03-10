@@ -1,6 +1,7 @@
 {
   "name": "imiji-broker",
   "version": "1.0.0-SNAPSHOT",
+  "main": "dist/index.js",
   "scripts": {
     "build": "rm -rf dist && tsc -p tsconfig.build.json"
   },
