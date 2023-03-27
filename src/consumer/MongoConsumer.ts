@@ -28,6 +28,7 @@ export class MongoConsumer implements IConsumer {
   }
 
   async connect() {
+    await this.redisClient.connect();
     this.logger.debug(`${this.groupId} consumer connected`);
   }
 
