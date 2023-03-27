@@ -83,8 +83,11 @@ export class MongoConsumer implements IConsumer {
     const lockValue = Date.now() + 5000; // Lock expires after 5 seconds
     const acquired = await new Promise(async (resolve) => {
       try {
-        await this.redisClient.setEx(lockKey, 5, lockValue.toString());
-        resolve(true);
+        const res: boolean = await this.redisClient.setNX(
+          lockKey,
+          lockValue.toString()
+        );
+        resolve(res);
       } catch (e) {
         resolve(false);
       }
