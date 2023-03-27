@@ -32,6 +32,7 @@ export class BrokerStrategy extends Server implements CustomTransportStrategy {
           .filter((pattern) => !!pattern);
         await this.consumer.consume({
           topic,
+          redisDB: this.configService.get("REDIS_DB"),
           groupId: groupId,
           user: this.configService.get("BROKER_USER"),
           onMessage: async (event: IEvent) => {
