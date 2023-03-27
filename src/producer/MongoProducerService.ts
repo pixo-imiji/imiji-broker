@@ -1,6 +1,9 @@
 import { Connection } from "mongoose";
 import { Injectable, OnApplicationShutdown } from "@nestjs/common";
-import { Transactional } from "mongoose-transaction-decorator";
+import {
+  Transactional,
+  TransactionConnection,
+} from "mongoose-transaction-decorator";
 import { IEvent } from "imiji-server-api";
 import { BrokerProducerDBConnectionName, IProducer } from "../api";
 import { MongoProducer } from "./MongoProducer";
@@ -13,7 +16,9 @@ export class MongoProducerService implements OnApplicationShutdown {
   constructor(
     @InjectConnection(BrokerProducerDBConnectionName)
     private readonly connection: Connection
-  ) {}
+  ) {
+    new TransactionConnection().setConnection(connection);
+  }
 
   @Transactional()
   async produce(topic: string, event: IEvent) {
