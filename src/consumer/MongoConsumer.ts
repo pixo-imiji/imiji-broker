@@ -1,11 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { ChangeStream } from "mongodb";
 import { Collection, Connection } from "mongoose";
-import {
-  TransactionConnection,
-  Transactional,
-} from "mongoose-transaction-decorator";
-import { IConsumer } from "src/api";
+import { IConsumer } from "../api";
 
 export const dbName = "consumers";
 
@@ -27,7 +23,6 @@ export class MongoConsumer implements IConsumer {
   }
 
   async connect() {
-    new TransactionConnection().setConnection(this.mongo);
     this.logger.debug(`${this.groupId} consumer connected`);
   }
 
@@ -73,7 +68,6 @@ export class MongoConsumer implements IConsumer {
     return this.stream;
   }
 
-  @Transactional()
   async consume(onEvent: (event) => Promise<void>) {
     const {
       authInfo: { authenticatedUsers },
