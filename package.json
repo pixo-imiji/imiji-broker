@@ -20,17 +20,16 @@
     "bcrypt": "^5.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "imiji-server-api": "^1.0.0-SNAPSHOT",
     "kafkajs": "^2.2.3",
     "mongodb": "^5.1.0",
     "mongoose": "^6.9.2",
-    "mongoose-transaction-decorator": "^1.0.1",
     "nj-request-scope": "^1.0.7",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
-    "uuidv4": "^6.2.13",
-    "imiji-server-api": "^1.0.0-SNAPSHOT"
+    "uuidv4": "^6.2.13"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
