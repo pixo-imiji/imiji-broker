@@ -3,6 +3,7 @@ import { Connection } from "mongoose";
 import { BrokerConsumerDBConnectionName, IConsumer } from "../api";
 import { MongoConsumer } from "./MongoConsumer";
 import { InjectConnection } from "@nestjs/mongoose";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class MongoConsumerService implements OnApplicationShutdown {
@@ -11,13 +12,13 @@ export class MongoConsumerService implements OnApplicationShutdown {
   constructor(
     @InjectConnection(BrokerConsumerDBConnectionName)
     private readonly connection: Connection,
-    @Inject("REDIS") private readonly redisUrl: string
+    private readonly configService: ConfigService
   ) {}
 
   async consume({ topic, groupId, user, onMessage }) {
     const consumer = new MongoConsumer(
       this.connection,
-      this.redisUrl,
+      this.configService.get("REDIS_DB"),
       topic,
       groupId,
       user
