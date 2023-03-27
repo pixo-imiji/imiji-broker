@@ -1,7 +1,10 @@
 import { Logger } from "@nestjs/common";
 import { ChangeStream } from "mongodb";
 import { Collection, Connection } from "mongoose";
-import { TransactionConnection } from "mongoose-transaction-decorator";
+import {
+  TransactionConnection,
+  Transactional,
+} from "mongoose-transaction-decorator";
 import { IConsumer } from "src/api";
 
 export const dbName = "consumers";
@@ -70,6 +73,7 @@ export class MongoConsumer implements IConsumer {
     return this.stream;
   }
 
+  @Transactional()
   async consume(onEvent: (event) => Promise<void>) {
     const {
       authInfo: { authenticatedUsers },

@@ -1,6 +1,9 @@
 import { Logger } from "@nestjs/common";
 import { Connection } from "mongoose";
-import { TransactionConnection } from "mongoose-transaction-decorator";
+import {
+  Transactional,
+  TransactionConnection,
+} from "mongoose-transaction-decorator";
 import { IEvent } from "imiji-server-api";
 import { IProducer } from "src/api";
 
@@ -25,6 +28,7 @@ export class MongoProducer implements IProducer {
     this.logger.debug(`consumer disconnected`);
   }
 
+  @Transactional()
   async produce(event: IEvent) {
     const timestamp = new Date().getTime();
     await this.mongo.collection(this.topic).insertOne({ ...event, timestamp });
