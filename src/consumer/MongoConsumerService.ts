@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationShutdown } from "@nestjs/common";
+import { Inject, Injectable, OnApplicationShutdown } from "@nestjs/common";
 import { Connection } from "mongoose";
 import { BrokerConsumerDBConnectionName, IConsumer } from "../api";
 import { MongoConsumer } from "./MongoConsumer";
@@ -10,11 +10,18 @@ export class MongoConsumerService implements OnApplicationShutdown {
 
   constructor(
     @InjectConnection(BrokerConsumerDBConnectionName)
-    private readonly connection: Connection
+    private readonly connection: Connection,
+    @Inject("REDIS") private readonly redisUrl: string
   ) {}
 
   async consume({ topic, groupId, user, onMessage }) {
-    const consumer = new MongoConsumer(this.connection, topic, groupId, user);
+    const consumer = new MongoConsumer(
+      this.connection,
+      this.redisUrl,
+      topic,
+      groupId,
+      user
+    );
     await consumer.connect();
     await consumer.consume(onMessage);
     this.consumers.push(consumer);

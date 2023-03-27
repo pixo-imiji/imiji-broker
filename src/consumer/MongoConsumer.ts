@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { ChangeStream } from "mongodb";
+import { createClient, RedisClientType } from "redis";
 import { Collection, Connection } from "mongoose";
 import { IConsumer } from "../api";
 
@@ -10,16 +11,20 @@ export class MongoConsumer implements IConsumer {
   private readonly consumer: Collection;
   private stream;
 
+  private redisClient: RedisClientType;
+
   private cachedConsumer = null;
 
   constructor(
     private readonly mongo: Connection,
+    private readonly redisUrl: string,
     private readonly topic: string,
     private readonly groupId: string,
     private readonly user: string
   ) {
     this.logger = new Logger(MongoConsumer.name);
     this.consumer = mongo.collection(dbName);
+    this.redisClient = createClient({ url: redisUrl });
   }
 
   async connect() {
@@ -68,6 +73,30 @@ export class MongoConsumer implements IConsumer {
     return this.stream;
   }
 
+  private async lock(event, onEvent: (event) => Promise<any>) {
+    const lockKey = `lock:${event._id}`;
+    const value = await this.redisClient.get(lockKey);
+    if (value) {
+      return;
+    }
+    const lockValue = Date.now() + 5000; // Lock expires after 5 seconds
+    const acquired = await new Promise(async (resolve) => {
+      try {
+        await this.redisClient.setEx(lockKey, 5, lockValue.toString());
+        resolve(true);
+      } catch (e) {
+        resolve(false);
+      }
+    });
+    if (acquired) {
+      try {
+        await onEvent(event);
+      } finally {
+        await this.redisClient.del(lockKey);
+      }
+    }
+  }
+
   async consume(onEvent: (event) => Promise<void>) {
     const {
       authInfo: { authenticatedUsers },
@@ -86,19 +115,22 @@ export class MongoConsumer implements IConsumer {
       .sort({ timestamp: 1 })
       .toArray();
     for (let i = 0; i < events.length; i++) {
-      const e = events[i];
-      await onEvent(e);
-      await this.saveCommit(e._id);
+      const event = events[i];
+      await this.lock(event, onEvent);
+      await this.saveCommit(event._id);
     }
-    this.createStream().on("change", (next, _) =>
-      onEvent(next.fullDocument).then(() =>
-        this.saveCommit(next.fullDocument._id)
-      )
+    this.createStream().on(
+      "change",
+      async (next, _) =>
+        await this.lock(next.fullDocument, (event) =>
+          onEvent(event).then(() => this.saveCommit(next.fullDocument._id))
+        )
     );
   }
 
   async disconnect() {
     await this.stream.close();
+    await this.redisClient.quit();
     this.logger.debug(`consumer disconnected`);
   }
 }
