@@ -94,6 +94,7 @@ export class MongoConsumer implements IConsumer {
     });
     if (acquired) {
       try {
+        await this.redisClient.expire(lockKey, 10);
         await onEvent(event);
       } finally {
         setTimeout(async () => await this.redisClient.del(lockKey), 5000);
