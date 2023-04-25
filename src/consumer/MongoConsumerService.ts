@@ -1,14 +1,15 @@
-import { Injectable, OnApplicationShutdown } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Connection } from "mongoose";
-import { BrokerConsumerDBConnectionName, IConsumer } from "../api";
+import {
+  BrokerConsumerDBConnectionName,
+  IConsumer,
+  IConsumerService,
+} from "../api";
 import { MongoConsumer } from "./MongoConsumer";
 import { InjectConnection } from "@nestjs/mongoose";
-import { IConsumerService } from "../api/IConsumerService";
 
 @Injectable()
-export class MongoConsumerService
-  implements IConsumerService, OnApplicationShutdown
-{
+export class MongoConsumerService implements IConsumerService {
   private readonly consumers: IConsumer[] = [];
 
   constructor(

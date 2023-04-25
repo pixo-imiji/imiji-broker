@@ -1,15 +1,16 @@
 import { Connection } from "mongoose";
-import { Injectable, OnApplicationShutdown } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { IEvent } from "imiji-server-api";
-import { BrokerProducerDBConnectionName, IProducer } from "../api";
 import { MongoProducer } from "./MongoProducer";
+import {
+  BrokerProducerDBConnectionName,
+  IProducer,
+  IProducerService,
+} from "../api";
 import { InjectConnection } from "@nestjs/mongoose";
-import { IProducerService } from "../api/IProducerService";
 
 @Injectable()
-export class MongoProducerService
-  implements IProducerService, OnApplicationShutdown
-{
+export class MongoProducerService implements IProducerService {
   private readonly producers = new Map<string, IProducer>();
 
   constructor(
