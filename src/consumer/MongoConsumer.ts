@@ -75,7 +75,7 @@ export class MongoConsumer implements IConsumer {
   }
 
   private async lock(event, onEvent: (event) => Promise<any>) {
-    const lockKey = `lock:${event._id}`;
+    const lockKey = `lock:${event._id}:${this.groupId}`;
     const value = await this.redisClient.get(lockKey);
     if (value) {
       return;
