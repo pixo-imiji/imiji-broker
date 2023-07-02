@@ -1,6 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { ChangeStream } from "mongodb";
 import { createClient, RedisClientType } from "redis";
+import * as RedisLock from "redis-lock";
 import { Collection, Connection } from "mongoose";
 import { IConsumer } from "../../api";
 
@@ -10,8 +11,8 @@ export class MongoConsumer implements IConsumer {
   private readonly logger: Logger;
   private readonly consumer: Collection;
   private stream;
-
-  private redisClient: RedisClientType;
+  private readonly redisClient: RedisClientType;
+  private readonly redisLock;
 
   private cachedConsumer = null;
 
@@ -25,6 +26,7 @@ export class MongoConsumer implements IConsumer {
     this.logger = new Logger(MongoConsumer.name);
     this.consumer = mongo.collection(dbName);
     this.redisClient = createClient({ url: redisUrl });
+    this.redisLock = RedisLock(this.redisClient);
   }
 
   async connect() {
@@ -76,30 +78,9 @@ export class MongoConsumer implements IConsumer {
 
   private async lock(event, onEvent: (event) => Promise<any>) {
     const lockKey = `lock:${event._id}:${this.groupId}`;
-    const value = await this.redisClient.get(lockKey);
-    if (value) {
-      return;
-    }
-    const lockValue = Date.now() + 5000; // Lock expires after 5 seconds
-    const acquired = await new Promise(async (resolve) => {
-      try {
-        const res: boolean = await this.redisClient.setNX(
-          lockKey,
-          lockValue.toString()
-        );
-        resolve(res);
-      } catch (e) {
-        resolve(false);
-      }
-    });
-    if (acquired) {
-      try {
-        await this.redisClient.expire(lockKey, 10);
-        await onEvent(event);
-      } finally {
-        setTimeout(async () => await this.redisClient.del(lockKey), 5000);
-      }
-    }
+    const done = await this.redisLock(lockKey);
+    await onEvent(event);
+    await done();
   }
 
   async consume(onEvent: (event) => Promise<void>) {
@@ -124,6 +105,7 @@ export class MongoConsumer implements IConsumer {
       await this.lock(event, onEvent);
       await this.saveCommit(event._id);
     }
+    this.logger.debug("start watch events");
     this.createStream().on(
       "change",
       async (next, _) =>
