@@ -19,9 +19,9 @@ export class KafkaProducerService implements IProducerService {
   ) {}
 
   async produce(topic: string, event: IEvent): Promise<any> {
-    const producer = this.producers.get(topic);
+    let producer = this.producers.get(topic);
     if (!producer) {
-      const producer = new KafkaProducer(
+      producer = new KafkaProducer(
         topic,
         this.brokers,
         this.username,
