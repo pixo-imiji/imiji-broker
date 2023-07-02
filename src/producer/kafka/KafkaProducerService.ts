@@ -1,10 +1,11 @@
-import { IConsumerService } from "../../api";
+import { IProducerService } from "../../api";
 import { Inject, Injectable } from "@nestjs/common";
 import { KafkaProducer } from "./KafkaProducer";
+import { IEvent } from "imiji-server-api";
 
 @Injectable()
-export class KafkaProducerService implements IConsumerService {
-  private readonly consumers: KafkaProducer[] = [];
+export class KafkaProducerService implements IProducerService {
+  private readonly producers: Map<String, KafkaProducer> = new Map();
 
   constructor(
     @Inject("kafka-brokers")
@@ -17,23 +18,26 @@ export class KafkaProducerService implements IConsumerService {
     private readonly ssl: boolean
   ) {}
 
-  async consume({ topic, groupId, onMessage }): Promise<any> {
-    const consumer = new KafkaProducer(
-      topic,
-      groupId,
-      this.brokers,
-      this.username,
-      this.password,
-      this.ssl
-    );
-    await consumer.connect();
-    await consumer.consume(onMessage);
-    this.consumers.push(consumer);
+  async produce(topic: string, event: IEvent): Promise<any> {
+    const producer = this.producers.get(topic);
+    if (!producer) {
+      const producer = new KafkaProducer(
+        topic,
+        this.brokers,
+        this.username,
+        this.password,
+        this.ssl
+      );
+      await producer.connect();
+      this.producers.set(topic, producer);
+    }
+    await producer.produce(event);
   }
 
   async onApplicationShutdown() {
-    for (const consumer of this.consumers) {
-      await consumer.disconnect();
+    const producers = this.producers.values();
+    for (const producer of producers) {
+      await producer.disconnect();
     }
   }
 }
