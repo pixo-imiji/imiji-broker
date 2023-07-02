@@ -2,7 +2,7 @@ import { Logger } from "@nestjs/common";
 import { ChangeStream } from "mongodb";
 import { createClient, RedisClientType } from "redis";
 import { Collection, Connection } from "mongoose";
-import { IConsumer } from "../api";
+import { IConsumer } from "../../api";
 
 export const dbName = "consumers";
 

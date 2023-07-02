@@ -4,7 +4,7 @@ import {
   BrokerConsumerDBConnectionName,
   IConsumer,
   IConsumerService,
-} from "../api";
+} from "../../api";
 import { MongoConsumer } from "./MongoConsumer";
 import { InjectConnection } from "@nestjs/mongoose";
 

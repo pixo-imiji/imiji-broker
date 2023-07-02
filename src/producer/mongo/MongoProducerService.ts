@@ -6,7 +6,7 @@ import {
   BrokerProducerDBConnectionName,
   IProducer,
   IProducerService,
-} from "../api";
+} from "../../api";
 import { InjectConnection } from "@nestjs/mongoose";
 
 @Injectable()

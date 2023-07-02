@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common";
 import { Connection } from "mongoose";
 import { IEvent } from "imiji-server-api";
-import { IProducer } from "../api";
+import { IProducer } from "../../api";
 
 export class MongoProducer implements IProducer {
   private readonly logger: Logger;

@@ -1,2 +1,2 @@
-export * from "./MongoProducer";
-export * from "./MongoProducerService";
+export * from "./kafka";
+export * from "./mongo";
