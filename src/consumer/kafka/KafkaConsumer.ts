@@ -1,5 +1,5 @@
 import { Logger } from "@nestjs/common";
-import { Kafka, Consumer } from "kafkajs";
+import { Kafka, Consumer, SASLOptions } from "kafkajs";
 import { IConsumer } from "../../api";
 
 export class KafkaConsumer implements IConsumer {
@@ -13,21 +13,30 @@ export class KafkaConsumer implements IConsumer {
     private readonly brokers: string[],
     private readonly username: string,
     private readonly password: string,
-    private readonly ssl: boolean
+    private readonly ssl: boolean,
+    private readonly mechanism: string
   ) {
     this.logger = new Logger(KafkaConsumer.name);
     this.kafka = new Kafka({
       brokers: this.brokers,
-      sasl: password
-        ? {
-            mechanism: "scram-sha-256",
-            username,
-            password,
-          }
+      sasl: this.password
+        ? this.createSasl(this.mechanism, this.username, this.password)
         : undefined,
       ssl,
     });
     this.consumer = this.kafka.consumer({ groupId: this.groupId });
+  }
+
+  private createSasl(
+    mechanism: any,
+    username: string,
+    password: string
+  ): SASLOptions {
+    return {
+      mechanism,
+      username,
+      password,
+    };
   }
 
   async connect() {

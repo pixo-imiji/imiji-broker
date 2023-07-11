@@ -14,7 +14,9 @@ export class KafkaConsumerService implements IConsumerService {
     @Inject("kafka-password")
     private readonly password: string,
     @Inject("kafka-ssl")
-    private readonly ssl: boolean
+    private readonly ssl: boolean,
+    @Inject("kafka-mechanism")
+    private readonly mechanism: string
   ) {}
 
   async consume({ topic, groupId, onMessage }): Promise<any> {
@@ -24,7 +26,8 @@ export class KafkaConsumerService implements IConsumerService {
       this.brokers,
       this.username,
       this.password,
-      this.ssl
+      this.ssl,
+      this.mechanism
     );
     await consumer.connect();
     await consumer.consume(onMessage);
