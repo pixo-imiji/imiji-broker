@@ -47,16 +47,25 @@ export class KafkaConsumer implements IConsumer {
     await this.consumer.subscribe({ topic: this.topic });
     return this.consumer.run({
       autoCommit: false,
-      eachMessage: async ({ message, topic, partition }) =>
-        await onEvent(JSON.parse(message.value.toString())).then(() =>
-          this.consumer.commitOffsets([
-            {
-              topic,
-              partition,
-              offset: message.offset,
-            },
-          ])
-        ),
+      eachMessage: async ({ message, topic, partition, heartbeat }) => {
+        const interval = setInterval(async () => await heartbeat(), 20 * 1000);
+        try {
+          await onEvent(JSON.parse(message.value.toString()))
+            .then(() =>
+              this.consumer.commitOffsets([
+                {
+                  topic,
+                  partition,
+                  offset: (Number(message.offset) + 1).toString(),
+                },
+              ])
+            )
+            .then(() => clearInterval(interval));
+        } catch (e) {
+          clearInterval(interval);
+          throw e;
+        }
+      },
     });
   }
 
