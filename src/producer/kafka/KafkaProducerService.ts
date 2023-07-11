@@ -15,7 +15,9 @@ export class KafkaProducerService implements IProducerService {
     @Inject("kafka-password")
     private readonly password: string,
     @Inject("kafka-ssl")
-    private readonly ssl: boolean
+    private readonly ssl: boolean,
+    @Inject("kafka-mechanism")
+    private readonly mechanism: string
   ) {}
 
   async produce(topic: string, event: IEvent): Promise<any> {
@@ -26,6 +28,7 @@ export class KafkaProducerService implements IProducerService {
         this.brokers,
         this.username,
         this.password,
+        this.mechanism,
         this.ssl
       );
       await producer.connect();

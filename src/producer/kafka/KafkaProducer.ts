@@ -1,5 +1,12 @@
 import { Logger } from "@nestjs/common";
-import { Kafka, Producer } from "kafkajs";
+import {
+  Kafka,
+  Partitioners,
+  Producer,
+  SASLMechanism,
+  SASLMechanismOptions,
+  SASLOptions,
+} from "kafkajs";
 import { IProducer } from "../../api";
 import { IEvent } from "imiji-server-api";
 
@@ -13,21 +20,32 @@ export class KafkaProducer implements IProducer {
     private readonly brokers: string[],
     private readonly username: string,
     private readonly password: string,
+    private readonly mechanism: string,
     private readonly ssl: boolean
   ) {
     this.logger = new Logger(KafkaProducer.name);
     this.kafka = new Kafka({
       brokers: this.brokers,
-      sasl: password
-        ? {
-            mechanism: "scram-sha-256",
-            username,
-            password,
-          }
+      sasl: this.password
+        ? this.createSasl(this.mechanism, this.username, this.password)
         : undefined,
       ssl,
     });
-    this.producer = this.kafka.producer();
+    this.producer = this.kafka.producer({
+      createPartitioner: Partitioners.LegacyPartitioner,
+    });
+  }
+
+  private createSasl(
+    mechanism: any,
+    username: string,
+    password: string
+  ): SASLOptions {
+    return {
+      mechanism,
+      username,
+      password,
+    };
   }
 
   async connect() {
