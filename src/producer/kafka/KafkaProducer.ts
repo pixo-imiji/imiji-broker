@@ -1,14 +1,10 @@
 import { Logger } from "@nestjs/common";
-import {
-  Kafka,
-  Partitioners,
-  Producer,
-  SASLMechanism,
-  SASLMechanismOptions,
-  SASLOptions,
-} from "kafkajs";
-import { IProducer } from "../../api";
+import { Kafka, Partitioners, Producer, SASLOptions } from "kafkajs";
+import { v4 as uuidv4 } from "uuid";
+
 import { IEvent } from "imiji-server-api";
+
+import { IProducer } from "../../api";
 
 export class KafkaProducer implements IProducer {
   private readonly logger: Logger;
@@ -32,6 +28,9 @@ export class KafkaProducer implements IProducer {
       ssl,
     });
     this.producer = this.kafka.producer({
+      transactionalId: "transactional-" + this.topic + "-" + uuidv4(),
+      maxInFlightRequests: 1,
+      idempotent: true,
       createPartitioner: Partitioners.LegacyPartitioner,
     });
   }
@@ -57,6 +56,20 @@ export class KafkaProducer implements IProducer {
       topic: this.topic,
       messages: [{ value: JSON.stringify(message) }],
     });
+  }
+
+  async produceTx(run: () => Promise<any>, event: IEvent): Promise<any> {
+    const transaction = await this.producer.transaction();
+    try {
+      await transaction.send({
+        topic: this.topic,
+        messages: [{ value: JSON.stringify(event) }],
+      });
+      await run();
+      await transaction.commit();
+    } catch (e) {
+      await transaction.abort();
+    }
   }
 
   async disconnect() {

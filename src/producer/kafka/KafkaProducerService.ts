@@ -37,6 +37,27 @@ export class KafkaProducerService implements IProducerService {
     await producer.produce(event);
   }
 
+  async produceTx(
+    topic: string,
+    event: IEvent,
+    run: () => Promise<any>
+  ): Promise<any> {
+    let producer = this.producers.get(topic);
+    if (!producer) {
+      producer = new KafkaProducer(
+        topic,
+        this.brokers,
+        this.username,
+        this.password,
+        this.mechanism,
+        this.ssl
+      );
+      await producer.connect();
+      this.producers.set(topic, producer);
+    }
+    await producer.produceTx(run, event);
+  }
+
   async onApplicationShutdown() {
     const producers = this.producers.values();
     for (const producer of producers) {
