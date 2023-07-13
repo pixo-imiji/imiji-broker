@@ -36,4 +36,12 @@ export class MongoProducerService implements IProducerService {
       await producer.disconnect();
     }
   }
+
+  produceTx(
+    topic: string,
+    event: IEvent,
+    run: () => Promise<any>
+  ): Promise<any> {
+    throw new Error("mongo producer service not implemented");
+  }
 }
