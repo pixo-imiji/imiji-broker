@@ -1,11 +1,16 @@
 import { Logger } from "@nestjs/common";
 import { Kafka, Consumer, SASLOptions } from "kafkajs";
 import { IConsumer } from "../../api";
+import { IEvent } from "imiji-server-api";
 
 export class KafkaConsumer implements IConsumer {
   private readonly logger: Logger;
   private readonly kafka: Kafka;
   private readonly consumer: Consumer;
+
+  private readonly messageQueue = [];
+  private timeout: number = 10000;
+  private timer;
 
   constructor(
     private readonly topic: string,
@@ -43,24 +48,77 @@ export class KafkaConsumer implements IConsumer {
     await this.consumer.connect();
   }
 
-  async consume(onEvent: (event) => Promise<void>) {
+  private clearTimer() {
+    if (!this.timer) clearTimeout(this.timer);
+    this.timer = undefined;
+  }
+
+  private async processBatch(process: (message: IEvent) => Promise<void>) {
+    this.clearTimer();
+    const currentBatch = [];
+    while (this.messageQueue.length > 0) {
+      currentBatch.push(this.messageQueue.shift());
+    }
+
+    await Promise.allSettled(
+      currentBatch.map(async (message) => await process(message.value))
+    )
+      .then(() =>
+        currentBatch.map((message) => ({
+          topic: message.topic,
+          partition: message.partition,
+          offset: (Number(message.offset) + 1).toString(),
+        }))
+      )
+      .then((commits) => this.consumer.commitOffsets(commits));
+  }
+
+  private scheduleBatchProcessing(process: (message: IEvent) => Promise<void>) {
+    this.clearTimer();
+    this.timer = setTimeout(
+      async () => this.processBatch(process),
+      this.timeout
+    );
+  }
+
+  async consume(
+    onEvent: (event) => Promise<void>,
+    isBatch?: boolean, //default false
+    timeout?: number, // default 10 sec
+    batchSize?: number // default 5
+  ) {
     await this.consumer.subscribe({ topic: this.topic });
     return this.consumer.run({
       autoCommit: false,
       eachMessage: async ({ message, topic, partition, heartbeat }) => {
         const interval = setInterval(async () => await heartbeat(), 20 * 1000);
         try {
-          await onEvent(JSON.parse(message.value.toString()))
-            .then(() =>
-              this.consumer.commitOffsets([
-                {
-                  topic,
-                  partition,
-                  offset: (Number(message.offset) + 1).toString(),
-                },
-              ])
-            )
-            .then(() => clearInterval(interval));
+          if (isBatch) {
+            this.timeout = timeout ? timeout * 1000 : this.timeout;
+            batchSize = batchSize ? batchSize : 5;
+            this.messageQueue.push({
+              value: JSON.parse(message.value.toString()),
+              topic: partition,
+              offset: message.offset,
+            });
+            if (this.messageQueue.length >= batchSize) {
+              await this.processBatch(onEvent);
+            } else {
+              this.scheduleBatchProcessing(onEvent);
+            }
+          } else {
+            await onEvent(JSON.parse(message.value.toString()))
+              .then(() =>
+                this.consumer.commitOffsets([
+                  {
+                    topic,
+                    partition,
+                    offset: (Number(message.offset) + 1).toString(),
+                  },
+                ])
+              )
+              .then(() => clearInterval(interval));
+          }
         } catch (e) {
           clearInterval(interval);
           throw e;

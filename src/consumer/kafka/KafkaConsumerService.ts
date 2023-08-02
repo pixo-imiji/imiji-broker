@@ -19,7 +19,14 @@ export class KafkaConsumerService implements IConsumerService {
     private readonly mechanism: string
   ) {}
 
-  async consume({ topic, groupId, onMessage }): Promise<any> {
+  async consume({
+    topic,
+    groupId,
+    onMessage,
+    isBatch,
+    timeout,
+    batchSize,
+  }): Promise<any> {
     const consumer = new KafkaConsumer(
       topic,
       groupId,
@@ -30,7 +37,7 @@ export class KafkaConsumerService implements IConsumerService {
       this.mechanism
     );
     await consumer.connect();
-    await consumer.consume(onMessage);
+    await consumer.consume(onMessage, isBatch, timeout, batchSize);
     this.consumers.push(consumer);
   }
 
