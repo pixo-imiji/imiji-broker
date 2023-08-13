@@ -1,5 +1,5 @@
 import { Logger } from "@nestjs/common";
-import { Kafka, Partitioners, Producer, SASLOptions } from "kafkajs";
+import { Kafka, logLevel, Partitioners, Producer, SASLOptions } from "kafkajs";
 import { v4 as uuidv4 } from "uuid";
 
 import { IEvent } from "imiji-server-api";
@@ -22,6 +22,7 @@ export class KafkaProducer implements IProducer {
     this.logger = new Logger(KafkaProducer.name);
     this.kafka = new Kafka({
       brokers: this.brokers,
+      logLevel: logLevel.ERROR,
       sasl: this.password
         ? this.createSasl(this.mechanism, this.username, this.password)
         : undefined,

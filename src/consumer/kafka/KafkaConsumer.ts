@@ -1,5 +1,5 @@
 import { Logger } from "@nestjs/common";
-import { Kafka, Consumer, SASLOptions } from "kafkajs";
+import { Consumer, Kafka, logLevel, SASLOptions } from "kafkajs";
 import { IConsumer } from "../../api";
 import { IEvent } from "imiji-server-api";
 
@@ -24,6 +24,7 @@ export class KafkaConsumer implements IConsumer {
     this.logger = new Logger(KafkaConsumer.name);
     this.kafka = new Kafka({
       brokers: this.brokers,
+      logLevel: logLevel.ERROR,
       sasl: this.password
         ? this.createSasl(this.mechanism, this.username, this.password)
         : undefined,
